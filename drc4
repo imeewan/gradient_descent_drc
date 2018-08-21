@@ -1,0 +1,56 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue May 15 10:50:50 2018
+
+@author: acer
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
+
+def sigmoid(x, x0, k):
+     y = 1 / (1 + np.exp(-k*(x-x0)))
+     return y
+
+xdata = np.array([-2.214419939, -1.612359948, -1.010299957, -0.408239965, 0.193820026, 0.795880017, 1.397940009, 2])
+ydata = np.array([20227, 21596.5, 20783, 20853.5, 18560.5, 10111.5, 3833, 1834])
+xdata = -xdata
+
+ydata = ((ydata - min(ydata)) / (max(ydata) - min(ydata)))
+
+
+popt, pcov = curve_fit(sigmoid, xdata, ydata)
+print(popt)
+x = np.linspace(-2.5, 2.9, 50)
+y = sigmoid(x, popt[0], popt[1])
+
+x_tox_data = np.array([-2.214419939, -1.612359948, -1.010299957, -0.408239965, 0.193820026, 0.795880017, 1.397940009, 2])
+y_tox_data = np.array([1635.5, 1538, 1436, 1528.5, 1576, 1551, 870.5, 118])
+negative_control = np.array([(24509 + 17938 - min(ydata))/2])
+negative_control = ((negative_control -  np.average(y_tox_data)) / 26650.5) + 0.8
+y_tox_data = ((y_tox_data - min(y_tox_data)) / (max(y_tox_data) - min(y_tox_data)))
+x_tox_data = - x_tox_data
+
+popt_tox, pcov_tox = curve_fit(sigmoid, x_tox_data, y_tox_data)
+print(popt_tox)
+
+x_tox = np.linspace(-2.5, 2.9, 50)
+y_tox = sigmoid(x, popt_tox[0], popt_tox[1])
+
+plt.plot(xdata, ydata, 'o', label='J01_activity', color='blue')
+plt.plot(x_tox_data, y_tox_data, 'x', label='RI01_toxicity', color='red')
+plt.plot(0, negative_control, '+', label='negative_control', color='magenta')
+plt.plot(x, y, label='fit_activity')
+plt.plot(x_tox, y_tox, label='fit_toxicity')
+plt.ylim(-0.1, 1.2)
+plt.legend(loc='best')
+plt.show()
+
+x_half = ((popt[0] * popt[1]) - np.log(2))/popt[1]
+ec50 = 10 ** - x_half
+
+x_half_tox = ((popt_tox[0] * popt_tox[1]) - np.log(2))/popt_tox[1]
+lc50 = 10 ** - x_half_tox
+
+thera_inx = lc50 / ec50
